@@ -1358,7 +1358,7 @@ template <typename T, size_t ViewRank, size_t Rank>
 struct DiskView final : public detail::TensorBase<T, ViewRank> {
     DiskView(DiskTensor<T, Rank> &parent, const Dim<ViewRank> &dims, const Count<Rank> &counts, const Offset<Rank> &offsets,
              const Stride<Rank> &strides)
-        : _parent(parent), _dims(dims), _counts(counts), _offsets(offsets), _strides(strides), _tensor{_dims} {
+        : _parent(parent), _name{parent.name()}, _dims(dims), _counts(counts), _offsets(offsets), _strides(strides), _tensor{_dims} {
         h5::read<T>(_parent.disk(), _tensor.data(), h5::count{_counts}, h5::offset{_offsets});
     };
     DiskView(const DiskTensor<T, Rank> &parent, const Dim<ViewRank> &dims, const Count<Rank> &counts, const Offset<Rank> &offsets,
@@ -1445,6 +1445,7 @@ struct DiskView final : public detail::TensorBase<T, ViewRank> {
 
   private:
     DiskTensor<T, Rank> &_parent;
+    std::string          _name{"(Unnamed View)"};
     Dim<ViewRank>        _dims;
     Count<Rank>          _counts;
     Offset<Rank>         _offsets;

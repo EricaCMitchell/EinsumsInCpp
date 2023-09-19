@@ -8,7 +8,7 @@
 #include "einsums/Utilities.hpp"
 
 #include <H5Fpublic.h>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <complex>
 #include <type_traits>
 
@@ -2078,9 +2078,6 @@ TEST_CASE("einsum element") {
     SECTION("1") {
         Tensor C  = Tensor{"C", _i, _j};
         Tensor C0 = Tensor{"C", _i, _j};
-
-        zero(C);
-        zero(C0);
 
         Tensor B = create_random_tensor("B", _i, _j);
         Tensor A = create_random_tensor("A", _i, _j);

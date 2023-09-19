@@ -1,12 +1,15 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.24)  # 3.24 for FetchContent_Declare(FIND_PACKAGE_ARGS
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(EinsumsBranding)
 
 project(
-  einsums
+  Einsums
   VERSION ${EINSUMS_VERSION}
-  LANGUAGES C CXX)
+  LANGUAGES C CXX
+  DESCRIPTION "C++ library for compile-time contraction pattern analysis optimizing tensor operations"
+  HOMEPAGE_URL https://github.com/jturney/einsums
+  )
 
 include(FeatureSummary)
 include(EinsumsAPI)
@@ -24,10 +27,22 @@ include(EinsumsBuildTypeASAN)
 include(EinsumsBuildTypeMSAN)
 include(EinsumsBuildTypeUBSAN)
 
+set(ein Einsums)  # Namespace
+
 # ##############################################################################
-# User input options                                   #
+# User input options                                                           #
 # ##############################################################################
 include(einsums_option)
+
+# borrowed from pybind11 since einsums_option doesn't work
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting tests build type to Release as none was specified")
+  set(CMAKE_BUILD_TYPE
+      Release
+      CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel"
+                                               "RelWithDebInfo")
+endif()
 
 einsums_option(EINSUMS_CONTINUOUSLY_TEST_EINSUM BOOL
                "Every call to TensorAlgebra::einsum is tested" OFF)
@@ -44,6 +59,11 @@ einsums_option(EINSUMS_TEST_NANS BOOL
                "Test the result of every einsum for nans" OFF)
 einsums_option(EINSUMS_USE_HPTT BOOL
                "Use the HPTT package for tensor transpositions" ON)
+einsums_option(EINSUMS_ENABLE_TESTING BOOL "Build testing (requires Catch2)"
+               ${PROJECT_IS_TOP_LEVEL})
+einsums_option(EINSUMS_INSTALL_CMAKEDIR STRING
+               "Directory to which Einsums CMake config files installed."
+               share/cmake/Einsums)
 
 add_feature_info(
   EINSUMS_CONTINUOUSLY_TEST_EINSUM ${EINSUMS_CONTINUOUSLY_TEST_EINSUM}
@@ -61,6 +81,8 @@ add_feature_info(EINSUMS_RUNTIME_INDICES_CHECK ${EINSUMS_RUNTIME_INDICES_CHECK}
                  "Check the sizes of corresponding indices at runtime")
 add_feature_info(EINSUMS_USE_HPTT ${EINSUMS_USE_HPTT}
                  "Build with internal HPTT version")
+
+include(autocmake_safeguards)
 
 include(cmake/DetectHostArch.cmake)
 detect_host_arch()
@@ -83,9 +105,6 @@ else()
   find_package(BLAS REQUIRED)
   find_package(LAPACK REQUIRED)
 endif()
-
-find_package(CBLAS REQUIRED)
-find_package(LAPACKE REQUIRED)
 
 # Set default FFT library to mkl, if mkl was found, otherwise FFTW3
 set(EINSUMS_FFT_LIBRARY_DEFAULT "fftw3")
@@ -110,9 +129,11 @@ include(cmake/BackwardConfig.cmake)
 add_subdirectory(external)
 add_subdirectory(src)
 
-enable_testing()
+if (EINSUMS_ENABLE_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
-add_subdirectory(tests)
 add_subdirectory(timing)
 # add_subdirectory(experiments)
 
